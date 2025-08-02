@@ -1,7 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
-const Mega = require('mega');
+// Replace this line:
+// const Mega = require('mega');
+
+// With:
+const Mega = require('megajs').default;
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
