@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
-const Mega = require('megajs').MegaClient; // Corrected initialization
+const Mega = require('megajs').MegaClient;
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +19,7 @@ app.use(cors({
 const mega = new Mega({
   email: process.env.MEGA_EMAIL,
   password: process.env.MEGA_PASSWORD,
-  autologin: false // Recommended for server environments
+  autologin: false
 });
 
 // File type detection
@@ -33,7 +33,9 @@ function getFileType(filename) {
 // Upload endpoint
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
     await mega.login();
 
@@ -50,7 +52,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       url: url,
       filename: req.file.originalname,
       type: getFileType(req.file.originalname),
-      size: req.file.size,
+      size: req.file.size
     });
   } catch (err) {
     console.error('Upload error:', err);
@@ -74,7 +76,7 @@ app.get('/files', async (req, res) => {
         url: url,
         type: getFileType(file.name),
         size: file.size,
-        date: new Date(file.timestamp * 1000).toLocaleString(),
+        date: new Date(file.timestamp * 1000).toLocaleString()
       });
     }
 
@@ -86,25 +88,11 @@ app.get('/files', async (req, res) => {
 });
 
 // Health check
-app.get('/health', (req, res) => res.send('OK'));
+app.get('/health', (req, res) => {
+  res.send('OK');
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});          date: new Date(file.timestamp * 1000).toLocaleString(),
-        });
-      }
-    }
-
-    res.json({ success: true, files: fileList });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
-
-// Health check (required for Render)
-app.get('/health', (req, res) => res.send('OK'));
-
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
