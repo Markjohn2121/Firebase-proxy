@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
-const Mega = require('megajs').MegaClient;
+const mega = require('megajs'); // Corrected import
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -15,8 +15,8 @@ app.use(cors({
   methods: ['GET', 'POST']
 }));
 
-// Initialize Mega client
-const mega = new Mega({
+// Initialize Mega storage
+const storage = new mega.Storage({
   email: process.env.MEGA_EMAIL,
   password: process.env.MEGA_PASSWORD,
   autologin: false
@@ -37,14 +37,16 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    await mega.login();
+    await storage.login();
 
     const tempPath = `temp_${Date.now()}_${req.file.originalname}`;
     fs.writeFileSync(tempPath, req.file.buffer);
 
-    const file = await mega.upload(tempPath, req.file.originalname);
-    const url = await file.link();
+    const file = await storage.upload(tempPath, {
+      name: req.file.originalname
+    }).complete;
 
+    const url = await file.link();
     fs.unlinkSync(tempPath);
 
     res.json({
@@ -63,11 +65,12 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 // List files endpoint
 app.get('/files', async (req, res) => {
   try {
-    await mega.login();
-    const files = await mega.files;
+    await storage.login();
+    const root = await storage.root;
+    const files = await root.children;
 
     const fileList = [];
-    for (const file of Object.values(files)) {
+    for (const file of files) {
       if (file.directory) continue;
       
       const url = await file.link();
